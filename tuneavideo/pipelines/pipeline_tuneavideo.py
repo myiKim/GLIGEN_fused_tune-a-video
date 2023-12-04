@@ -390,9 +390,10 @@ class TuneAVideoPipeline(DiffusionPipeline):
         if test_no==1:
             gligen_boxes = [[0.2676, 0.6088, 0.4773, 0.7183]] #테스트용으로 덮어쓰기 (잠시)
             gligen_phrases = ["a birthday cake"] #테스트용으로 덮어쓰기 (잠시) => 차후 파이프라인 호출하는곳에서 핸들링하게 해야함.
+        else:
+            gligen_boxes = self.gligen_boxes
+            gligen_phrases = self.gligen_phrases
 
-
-        # print("5.1 Prepare GLIGEN variables!!!!!!!!!!!!!!") 
         gligen =True
         max_objs = 30
         if len(self.gligen_boxes) > max_objs:
@@ -400,8 +401,8 @@ class TuneAVideoPipeline(DiffusionPipeline):
             #     f"More that {max_objs} objects found. Only first {max_objs} objects will be processed.",
             #     FutureWarning,
             # ) #임시로 워닝을 지우기
-            gligen_phrases = self.gligen_phrases[:max_objs]
-            gligen_boxes = self.gligen_boxes[:max_objs]
+            gligen_phrases = gligen_phrases[:max_objs]
+            gligen_boxes = gligen_boxes[:max_objs]
 
         if gligen:
             # prepare batched input to the PositionNet (boxes, phrases, mask)
