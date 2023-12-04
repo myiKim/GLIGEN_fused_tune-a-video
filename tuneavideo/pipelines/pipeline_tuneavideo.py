@@ -54,6 +54,11 @@ class TuneAVideoPipeline(DiffusionPipeline):
             EulerAncestralDiscreteScheduler,
             DPMSolverMultistepScheduler,
         ],
+        ############### Myungin add new for GLIGEN (23/12/03) STARTS ###################
+        gligen_scheduled_sampling_beta: float = 0.3,
+        gligen_phrases: List[str] = None,
+        gligen_boxes: List[List[float]] = None,
+        ############### Myungin add new for GLIGEN (23/12/03) ENDS #####################
     ):
         super().__init__()
 
@@ -113,6 +118,11 @@ class TuneAVideoPipeline(DiffusionPipeline):
             scheduler=scheduler,
         )
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
+        ############### Myungin add new for GLIGEN (23/12/03) STARTS ###################
+        self.gligen_boxes = gligen_boxes
+        self.gligen_phrases = gligen_phrases
+        self.gligen_scheduled_sampling_beta = gligen_scheduled_sampling_beta
+        ############### Myungin add new for GLIGEN (23/12/03) ENDS #####################
 
     def enable_vae_slicing(self):
         self.vae.enable_slicing()
@@ -316,11 +326,7 @@ class TuneAVideoPipeline(DiffusionPipeline):
         width: Optional[int] = None,
         num_inference_steps: int = 50,
         guidance_scale: float = 7.5,
-        ############### Myungin add new for GLIGEN (23/12/03) STARTS ###################
-        gligen_scheduled_sampling_beta: float = 0.3,
-        gligen_phrases: List[str] = None,
-        gligen_boxes: List[List[float]] = None,
-        ############### Myungin add new for GLIGEN (23/12/03) ENDS #####################
+
         negative_prompt: Optional[Union[str, List[str]]] = None,
         num_videos_per_prompt: Optional[int] = 1,
         eta: float = 0.0,
@@ -377,22 +383,13 @@ class TuneAVideoPipeline(DiffusionPipeline):
             latents,
         )
         latents_dtype = latents.dtype
-        print("latent size : ", latents.size())
+
 
         ############### Myungin add new for GLIGEN (23/12/03) STARTS ###################
-        test_no =3
+        test_no =0
         if test_no==1:
             gligen_boxes = [[0.2676, 0.6088, 0.4773, 0.7183]] #테스트용으로 덮어쓰기 (잠시)
             gligen_phrases = ["a birthday cake"] #테스트용으로 덮어쓰기 (잠시) => 차후 파이프라인 호출하는곳에서 핸들링하게 해야함.
-        elif test_no==2:
-            print("len 2 ")
-            gligen_boxes = [[0.2676, 0.6088, 0.4773, 0.7183], [0.1125,0.6066, 0.4775, 0.8989]] #테스트용으로 덮어쓰기 (잠시)
-            gligen_phrases = ["a birthday cake", "sum chamgo love dive"] 
-        
-        else:
-            print("len 3 ")
-            gligen_boxes = [[0.2676, 0.6088, 0.4773, 0.7183], [0.1676, 0.3088, 0.2273, 0.4981], [0.1125,0.6066, 0.4775, 0.8989]] #테스트용으로 덮어쓰기 (잠시)
-            gligen_phrases = ["a birthday cake", "sum chamgo love dive", "graduated cum laude"] 
 
 
         # print("5.1 Prepare GLIGEN variables!!!!!!!!!!!!!!") 
@@ -403,8 +400,8 @@ class TuneAVideoPipeline(DiffusionPipeline):
             #     f"More that {max_objs} objects found. Only first {max_objs} objects will be processed.",
             #     FutureWarning,
             # ) #임시로 워닝을 지우기
-            gligen_phrases = gligen_phrases[:max_objs]
-            gligen_boxes = gligen_boxes[:max_objs]
+            gligen_phrases = self.gligen_phrases[:max_objs]
+            gligen_boxes = self.gligen_boxes[:max_objs]
 
         if gligen:
             # prepare batched input to the PositionNet (boxes, phrases, mask)
@@ -441,7 +438,7 @@ class TuneAVideoPipeline(DiffusionPipeline):
                 cross_attention_kwargs = {}
             cross_attention_kwargs["gligen"] = {"boxes": boxes, "positive_embeddings": text_embeddings, "masks": masks}
             # print("INPUT RAW : ", cross_attention_kwargs["gligen"] )
-            num_grounding_steps = int(gligen_scheduled_sampling_beta * len(timesteps))
+            num_grounding_steps = int(self.gligen_scheduled_sampling_beta * len(timesteps))
             # self.enable_fuser(True) # not implemented
 
 

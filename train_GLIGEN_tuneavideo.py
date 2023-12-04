@@ -4,7 +4,7 @@ import logging
 import inspect
 import math
 import os
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, List
 from omegaconf import OmegaConf
 
 import torch
@@ -66,6 +66,10 @@ def main(
     use_8bit_adam: bool = False,
     enable_xformers_memory_efficient_attention: bool = True,
     seed: Optional[int] = None,
+    train_gligen_boxes: List[List[float]] = None,
+    train_gligen_phrases: List[str] = None,
+    val_gligen_boxes: List[List[float]] = None,
+    val_gligen_phrases: List[str] = None
 ):
     *_, config = inspect.getargvalues(inspect.currentframe())
 
@@ -165,12 +169,12 @@ def main(
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, batch_size=train_batch_size
     )
-    print("dir : ", train_dataloader.__dir__())
 
     # Get the validation pipeline
     validation_pipeline = TuneAVideoPipeline(
         vae=vae, text_encoder=text_encoder, tokenizer=tokenizer, unet=unet,
-        scheduler=DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler")
+        scheduler=DDIMScheduler.from_pretrained(pretrained_model_path, subfolder="scheduler"),
+        gligen_boxes = val_gligen_boxes, gligen_phrases=val_gligen_phrases
     )
     validation_pipeline.enable_vae_slicing()
     ddim_inv_scheduler = DDIMScheduler.from_pretrained(pretrained_model_path, subfolder='scheduler')
@@ -355,6 +359,8 @@ def main(
             text_encoder=text_encoder,
             vae=vae,
             unet=unet,
+            gligen_boxes = train_gligen_boxes, 
+            gligen_phrases=train_gligen_phrases
         )
         pipeline.save_pretrained(output_dir)
 
