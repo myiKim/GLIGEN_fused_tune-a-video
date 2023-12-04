@@ -395,7 +395,7 @@ class TuneAVideoPipeline(DiffusionPipeline):
         # print("5.1 Prepare GLIGEN variables!!!!!!!!!!!!!!") 
         gligen =True
         max_objs = 30
-        if len(gligen_boxes) > max_objs:
+        if len(self.gligen_boxes) > max_objs:
             # warnings.warn(
             #     f"More that {max_objs} objects found. Only first {max_objs} objects will be processed.",
             #     FutureWarning,
