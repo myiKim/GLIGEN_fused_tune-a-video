@@ -17,7 +17,7 @@ pip install -r requirements.txt
 To Finetune(one-shot training) with validation, you might want to do the followings:
 
 ```bash
-accelerate launch train_tuneavideo.py --config="configs/gligen_init_test.yaml"
+accelerate launch train_GLIGEN_tuneavideo.py --config="configs/gligen_init_test.yaml"
 ```
 Please note that I did the training on V100 GPU on Colab.
 
